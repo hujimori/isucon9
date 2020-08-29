@@ -567,15 +567,69 @@ func getNewItems(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	userIDsUnique := make(map[int64]struct{})
+	var userIDs []int64
+	for _, item := range items {
+		id := item.SellerID
+		if _, ok := userIDsUnique[id]; !ok {
+			userIDs = append(userIDs, id)
+			userIDsUnique[id] = struct{}{}
+		}
+	}
+	userSimpleByID := make(map[int64]UserSimple)
+	if len(userIDs) > 0 {
+		q, vs, err := sqlx.In("SELECT * FROM `users` WHERE `id` IN (?)", userIDs)
+		if err != nil {
+			log.Print(err)
+			outputErrorMsg(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		var us []User
+		err = dbx.Select(&us, q, vs...)
+		if err != nil {
+			log.Print(err)
+			outputErrorMsg(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		for _, user := range us {
+			userSimpleByID[user.ID] = UserSimple{
+				ID:           user.ID,
+				AccountName:  user.AccountName,
+				NumSellItems: user.NumSellItems,
+			}
+		}
+	}
+
+	categories := []Category{}
+	err = dbx.Select(&categories, "SELECT * FROM `categories`")
+	if err != nil {
+		log.Print(err)
+		outputErrorMsg(w, http.StatusInternalServerError, "db error")
+		return
+	}
+	categoryByID := make(map[int]Category)
+	for _, category := range categories {
+		categoryByID[category.ID] = category
+	}
+	for _, category := range categories {
+		c, _ := categoryByID[category.ID]
+		if c.ParentID != 0 {
+			if parentCategory, ok := categoryByID[c.ParentID]; ok {
+				c.ParentCategoryName = parentCategory.CategoryName
+				categoryByID[category.ID] = c
+			}
+		}
+	}
+
 	itemSimples := []ItemSimple{}
 	for _, item := range items {
-		seller, err := getUserSimpleByID(dbx, item.SellerID)
-		if err != nil {
+		seller, ok := userSimpleByID[item.SellerID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "seller not found")
 			return
 		}
-		category, err := getCategoryByID(dbx, item.CategoryID)
-		if err != nil {
+		category, ok := categoryByID[item.CategoryID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "category not found")
 			return
 		}
