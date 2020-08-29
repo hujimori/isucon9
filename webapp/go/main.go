@@ -18,6 +18,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
+	proxy "github.com/shogo82148/go-sql-proxy"
 	goji "goji.io"
 	"goji.io/pat"
 	"golang.org/x/crypto/bcrypt"
@@ -63,6 +64,7 @@ var (
 	templates *template.Template
 	dbx       *sqlx.DB
 	store     sessions.Store
+	isDebug   bool
 )
 
 type Config struct {
@@ -279,6 +281,8 @@ func init() {
 }
 
 func main() {
+	isDebug = false
+
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
 		host = "127.0.0.1"
@@ -313,7 +317,13 @@ func main() {
 		dbname,
 	)
 
-	dbx, err = sqlx.Open("mysql", dsn)
+	dn := "mysql"
+	if isDebug {
+		// 実行されたクエリをトレースする
+		proxy.RegisterTracer()
+		dn = "mysql:trace"
+	}
+	dbx, err = sqlx.Open(dn, dsn)
 	if err != nil {
 		log.Fatalf("failed to connect to DB: %s.", err.Error())
 	}
