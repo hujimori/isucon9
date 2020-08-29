@@ -1,0 +1,236 @@
+
+# 380ms user time, 10ms system time, 37.71M rss, 55.85M vsz
+# Current date: Sat Aug 29 01:39:36 2020
+# Hostname: ubuntu
+# Files: /tmp/slow.log
+# Overall: 1.22k total, 9 unique, 4.93 QPS, 1.18x concurrency ____________
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:06
+# Attribute          total     min     max     avg     95%  stddev  median
+# ============     ======= ======= ======= ======= ======= ======= =======
+# Exec time           293s   100ms      1s   240ms   477ms   149ms   189ms
+# Lock time          114ms       0     5ms    93us   273us   282us    38us
+# Rows sent         46.69k       0      49   39.12   46.83   16.73   46.83
+# Rows examine      37.10M       0  48.91k  31.09k  46.68k  19.51k  46.68k
+# Query size       259.46k      30     285  217.42  246.02   45.32  234.30
+
+# Profile
+# Rank Query ID                        Response time Calls R/Call V/M   It
+# ==== =============================== ============= ===== ====== ===== ==
+#    1 0x5AF10ED6AD345D4B930FF1E60F... 98.4179 33.6%   474 0.2076  0.04 SELECT items
+#    2 0x534F6185E0A0C71693761CC334... 83.5418 28.5%   230 0.3632  0.15 SELECT items
+#    3 0x6D959E4C28C709C1312243B842... 39.0839 13.3%   165 0.2369  0.05 SELECT items
+#    4 0x528C15CEBCCFADFD36DB579940... 26.5730  9.1%   116 0.2291  0.05 SELECT items
+#    5 0x6688844580F541EC2C1B6BE83F... 17.8261  6.1%   100 0.1783  0.03 SELECT items
+#    6 0xC108F424549A524A9A74397A1F... 10.4436  3.6%    52 0.2008  0.04 SELECT items
+#    7 0xE503B9B2416495263F18C2F28C...  8.5754  2.9%    26 0.3298  0.17 SELECT items
+# MISC 0xMISC                           8.5444  2.9%    59 0.1448   0.0 <2 ITEMS>
+
+# Query 1: 1.95 QPS, 0.41x concurrency, ID 0x5AF10ED6AD345D4B930FF1E60F9B9ED6 at byte 284078
+# Scores: V/M = 0.04
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:01
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count         38     474
+# Exec time     33     98s   100ms   595ms   208ms   356ms    87ms   180ms
+# Lock time     39    46ms    25us     2ms    96us   384us   182us    40us
+# Rows sent     48  22.68k      49      49      49      49       0      49
+# Rows examine   9   3.52M   3.84k  10.19k   7.60k   9.80k   1.82k   7.31k
+# Query size    45 117.09k     248     257  252.96  246.02       0  246.02
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE `status` IN ('on_sale','sold_out') AND category_id IN (61, 62, 63, 64, 65, 66) AND (`created_at` < '2019-08-12 15:50:19'  OR (`created_at` <= '2019-08-12 15:50:19' AND `id` < 49818)) ORDER BY `created_at` DESC, `id` DESC LIMIT 49\G
+
+# Query 2: 0.93 QPS, 0.34x concurrency, ID 0x534F6185E0A0C71693761CC3349B416F at byte 275727
+# Scores: V/M = 0.15
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:06
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count         18     230
+# Exec time     28     84s   130ms      1s   363ms   900ms   235ms   279ms
+# Lock time     17    20ms    22us     5ms    88us   176us   330us    38us
+# Rows sent     23  11.01k      49      49      49      49       0      49
+# Rows examine  29  10.98M  48.88k  48.91k  48.90k  46.68k       0  46.68k
+# Query size    18  47.84k     213     213     213     213       0     213
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s  ##
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE `status` IN ('on_sale','sold_out') AND (`created_at` < '2019-08-12 15:52:46'  OR (`created_at` <= '2019-08-12 15:52:46' AND `id` < 49961)) ORDER BY `created_at` DESC, `id` DESC LIMIT 49\G
+
+# Query 3: 0.67 QPS, 0.16x concurrency, ID 0x6D959E4C28C709C1312243B842F41381 at byte 299613
+# Scores: V/M = 0.05
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:03
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count         13     165
+# Exec time     13     39s   100ms   532ms   237ms   393ms   104ms   219ms
+# Lock time     14    17ms    19us     5ms   103us   224us   389us    31us
+# Rows sent      8   3.94k       0      49   24.45   46.83   22.76    2.90
+# Rows examine  21   7.87M  48.83k  48.91k  48.87k  46.68k       0  46.68k
+# Query size     8  22.85k     140     142  141.78  136.99       0  136.99
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE `seller_id` = 2532 AND `status` IN ('on_sale','trading','sold_out') ORDER BY `created_at` DESC, `id` DESC LIMIT 49\G
+
+# Query 4: 0.48 QPS, 0.11x concurrency, ID 0x528C15CEBCCFADFD36DB5799406088D9 at byte 297501
+# Scores: V/M = 0.05
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:01
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          9     116
+# Exec time      9     27s   100ms   585ms   229ms   393ms   107ms   208ms
+# Lock time      7     9ms    26us   897us    74us   185us   128us    40us
+# Rows sent      8   3.84k      15      49   33.93   46.83   15.04   46.83
+# Rows examine  14   5.54M  48.85k  48.91k  48.88k  46.68k       0  46.68k
+# Query size    10  27.79k     243     246  245.28  234.30       0  234.30
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE `seller_id` = 2840 AND `status` IN ('on_sale','trading','sold_out') AND (`created_at` < '2019-08-12 10:02:43'  OR (`created_at` <= '2019-08-12 10:02:43' AND `id` < 28960)) ORDER BY `created_at` DESC, `id` DESC LIMIT 49\G
+
+# Query 5: 0.40 QPS, 0.07x concurrency, ID 0x6688844580F541EC2C1B6BE83F13FC2B at byte 18624
+# Scores: V/M = 0.03
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:06
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          8     100
+# Exec time      6     18s   101ms   463ms   178ms   356ms    77ms   148ms
+# Lock time     11    13ms    22us     5ms   129us   332us   527us    31us
+# Rows sent      1     880       4      11    8.80   10.84    2.43   10.84
+# Rows examine  12   4.77M  48.84k  48.87k  48.86k  46.68k       0  46.68k
+# Query size     6  17.64k     177     181  180.62  174.84       0  174.84
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE (`seller_id` = 1738 OR `buyer_id` = 1738) AND `status` IN ('on_sale','trading','sold_out','cancel','stop') ORDER BY `created_at` DESC, `id` DESC LIMIT 11\G
+
+# Query 6: 0.22 QPS, 0.04x concurrency, ID 0xC108F424549A524A9A74397A1FB13CDE at byte 275369
+# Scores: V/M = 0.04
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:26:59
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          4      52
+# Exec time      3     10s   101ms   609ms   201ms   356ms    93ms   171ms
+# Lock time      2     3ms    20us   394us    60us   247us    74us    33us
+# Rows sent      5   2.49k      49      49      49      49       0      49
+# Rows examine   1 417.43k   3.84k  10.19k   8.03k   9.80k   1.46k   7.31k
+# Query size     2   7.37k     140     149  145.04  143.84    2.97  143.84
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE `status` IN ('on_sale','sold_out') AND category_id IN (61, 62, 63, 64, 65, 66) ORDER BY created_at DESC, id DESC LIMIT 49\G
+
+# Query 7: 0.10 QPS, 0.03x concurrency, ID 0xE503B9B2416495263F18C2F28C3748A2 at byte 271947
+# Scores: V/M = 0.17
+# Time range: 2020-08-29T08:22:58 to 2020-08-29T08:27:06
+# Attribute    pct   total     min     max     avg     95%  stddev  median
+# ============ === ======= ======= ======= ======= ======= ======= =======
+# Count          2      26
+# Exec time      2      9s   134ms   966ms   330ms   857ms   238ms   208ms
+# Lock time      0     1ms    20us   204us    43us    76us    34us    31us
+# Rows sent      2   1.24k      49      49      49      49       0      49
+# Rows examine   3   1.24M  48.88k  48.91k  48.89k  46.68k       0  46.68k
+# Query size     1   2.77k     109     109     109     109       0     109
+# String:
+# Databases    isucari
+# Hosts        localhost
+# Users        isucari
+# Query_time distribution
+#   1us
+#  10us
+# 100us
+#   1ms
+#  10ms
+# 100ms  ################################################################
+#    1s
+#  10s+
+# Tables
+#    SHOW TABLE STATUS FROM `isucari` LIKE 'items'\G
+#    SHOW CREATE TABLE `isucari`.`items`\G
+# EXPLAIN /*!50100 PARTITIONS*/
+SELECT * FROM `items` WHERE `status` IN ('on_sale','sold_out') ORDER BY `created_at` DESC, `id` DESC LIMIT 49\G
