@@ -422,7 +422,7 @@ var categoryByID map[int]Category
 func cacheCategoryByID(q sqlx.Queryer) error {
 	categoryByID = make(map[int]Category)
 	categories := []Category{}
-	err := dbx.Select(&categories, "SELECT * FROM `categories`")
+	err := sqlx.Select(q, &categories, "SELECT * FROM `categories`")
 	if err != nil {
 		return err
 	}
@@ -552,12 +552,12 @@ func getUserSimpleMap(q sqlx.Queryer, items []Item) (map[int64]UserSimple, error
 	}
 	userSimpleByID := make(map[int64]UserSimple)
 	if len(userIDs) > 0 {
-		q, vs, err := sqlx.In("SELECT * FROM `users` WHERE `id` IN (?)", userIDs)
+		query, vs, err := sqlx.In("SELECT * FROM `users` WHERE `id` IN (?)", userIDs)
 		if err != nil {
 			return nil, err
 		}
 		var us []User
-		err = dbx.Select(&us, q, vs...)
+		err = sqlx.Select(q, &us, query, vs...)
 		if err != nil {
 			return nil, err
 		}
