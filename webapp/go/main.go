@@ -540,7 +540,7 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func getUserSimpleMap(items []Item) (map[int64]UserSimple, error) {
+func getUserSimpleMap(q sqlx.Queryer, items []Item) (map[int64]UserSimple, error) {
 	userIDsUnique := make(map[int64]struct{})
 	var userIDs []int64
 	for _, item := range items {
@@ -627,7 +627,7 @@ func getNewItems(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	userSimpleByID, err := getUserSimpleMap(items)
+	userSimpleByID, err := getUserSimpleMap(dbx, items)
 	if err != nil {
 		log.Print(err)
 		outputErrorMsg(w, http.StatusInternalServerError, "db error")
@@ -762,7 +762,7 @@ func getNewCategoryItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userSimpleByID, err := getUserSimpleMap(items)
+	userSimpleByID, err := getUserSimpleMap(dbx, items)
 	if err != nil {
 		log.Print(err)
 		outputErrorMsg(w, http.StatusInternalServerError, "db error")
@@ -996,10 +996,18 @@ func getTransactions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	userSimpleByID, err := getUserSimpleMap(tx, items)
+	if err != nil {
+		log.Print(err)
+		outputErrorMsg(w, http.StatusInternalServerError, "db error")
+		tx.Rollback()
+		return
+	}
+
 	itemDetails := []ItemDetail{}
 	for _, item := range items {
-		seller, err := getUserSimpleByID(tx, item.SellerID)
-		if err != nil {
+		seller, ok := userSimpleByID[item.SellerID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "seller not found")
 			tx.Rollback()
 			return
