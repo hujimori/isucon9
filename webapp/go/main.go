@@ -417,14 +417,42 @@ func getUserSimpleByID(q sqlx.Queryer, userID int64) (userSimple UserSimple, err
 	return userSimple, err
 }
 
+var categoryByID map[int]Category
+
+func cacheCategoryByID(q sqlx.Queryer) error {
+	categoryByID = make(map[int]Category)
+	categories := []Category{}
+	err := sqlx.Select(q, &categories, "SELECT * FROM `categories`")
+	if err != nil {
+		return err
+	}
+	for _, category := range categories {
+		categoryByID[category.ID] = category
+	}
+	for _, category := range categories {
+		c, _ := categoryByID[category.ID]
+		if c.ParentID != 0 {
+			if parentCategory, ok := categoryByID[c.ParentID]; ok {
+				c.ParentCategoryName = parentCategory.CategoryName
+				categoryByID[category.ID] = c
+			}
+		}
+	}
+	return nil
+}
+
 func getCategoryByID(q sqlx.Queryer, categoryID int) (category Category, err error) {
-	err = sqlx.Get(q, &category, "SELECT * FROM `categories` WHERE `id` = ?", categoryID)
-	if category.ParentID != 0 {
-		parentCategory, err := getCategoryByID(q, category.ParentID)
+	if categoryByID == nil {
+		err = cacheCategoryByID(q)
 		if err != nil {
 			return category, err
 		}
-		category.ParentCategoryName = parentCategory.CategoryName
+	}
+	category, ok := categoryByID[categoryID]
+	if ok {
+		err = nil
+	} else {
+		err = fmt.Errorf("categoryByID[%d]", categoryID)
 	}
 	return category, err
 }
@@ -512,6 +540,38 @@ func postInitialize(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func getUserSimpleMap(q sqlx.Queryer, items []Item) (map[int64]UserSimple, error) {
+	userIDsUnique := make(map[int64]struct{})
+	var userIDs []int64
+	for _, item := range items {
+		id := item.SellerID
+		if _, ok := userIDsUnique[id]; !ok {
+			userIDs = append(userIDs, id)
+			userIDsUnique[id] = struct{}{}
+		}
+	}
+	userSimpleByID := make(map[int64]UserSimple)
+	if len(userIDs) > 0 {
+		query, vs, err := sqlx.In("SELECT * FROM `users` WHERE `id` IN (?)", userIDs)
+		if err != nil {
+			return nil, err
+		}
+		var us []User
+		err = sqlx.Select(q, &us, query, vs...)
+		if err != nil {
+			return nil, err
+		}
+		for _, user := range us {
+			userSimpleByID[user.ID] = UserSimple{
+				ID:           user.ID,
+				AccountName:  user.AccountName,
+				NumSellItems: user.NumSellItems,
+			}
+		}
+	}
+	return userSimpleByID, nil
+}
+
 func getNewItems(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	itemIDStr := query.Get("item_id")
@@ -567,10 +627,17 @@ func getNewItems(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	userSimpleByID, err := getUserSimpleMap(dbx, items)
+	if err != nil {
+		log.Print(err)
+		outputErrorMsg(w, http.StatusInternalServerError, "db error")
+		return
+	}
+
 	itemSimples := []ItemSimple{}
 	for _, item := range items {
-		seller, err := getUserSimpleByID(dbx, item.SellerID)
-		if err != nil {
+		seller, ok := userSimpleByID[item.SellerID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "seller not found")
 			return
 		}
@@ -695,10 +762,17 @@ func getNewCategoryItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userSimpleByID, err := getUserSimpleMap(dbx, items)
+	if err != nil {
+		log.Print(err)
+		outputErrorMsg(w, http.StatusInternalServerError, "db error")
+		return
+	}
+
 	itemSimples := []ItemSimple{}
 	for _, item := range items {
-		seller, err := getUserSimpleByID(dbx, item.SellerID)
-		if err != nil {
+		seller, ok := userSimpleByID[item.SellerID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "seller not found")
 			return
 		}
@@ -922,10 +996,18 @@ func getTransactions(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	userSimpleByID, err := getUserSimpleMap(tx, items)
+	if err != nil {
+		log.Print(err)
+		outputErrorMsg(w, http.StatusInternalServerError, "db error")
+		tx.Rollback()
+		return
+	}
+
 	itemDetails := []ItemDetail{}
 	for _, item := range items {
-		seller, err := getUserSimpleByID(tx, item.SellerID)
-		if err != nil {
+		seller, ok := userSimpleByID[item.SellerID]
+		if !ok {
 			outputErrorMsg(w, http.StatusNotFound, "seller not found")
 			tx.Rollback()
 			return
