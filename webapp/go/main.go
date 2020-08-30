@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -282,6 +283,13 @@ func init() {
 
 func main() {
 	isDebug = false
+
+	// :6060/debug/pprof にアクセスしてプロファイリングを開始
+	// プロファイリング結果のファイル profile.prof に対し
+	// go tool pprof -http=":8888" profile.prof で可視化できる
+	go func() {
+		log.Println(http.ListenAndServe(":6060", nil))
+	}()
 
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
